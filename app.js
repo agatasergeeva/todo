@@ -36,7 +36,7 @@
   function build() {
     const app = $('section', { className: 'app', attrs: { role:'application' } });
 
-    const header = $('header', {}, [ $('span', { textContent: 'ToDo list' }) ]);
+    const header = $('header', {}, [ $('h2', { textContent: 'ToDo List' }) ]);
 
     const form = $('form', { className: 'add', attrs: { autocomplete:'off' } });
     const titleInput = $('input', { attrs: { type:'text', placeholder:'Задача', maxlength:'80', 'aria-label':'Название' } });
@@ -60,7 +60,8 @@
     controls.append(search, filter, sort);
 
     const main = $('main');
-    const list = $('ul', { attrs:{ role:'list' } });
+    const list = $('ul', { className:'tasks', attrs:{ role:'list' } });
+
     main.append(list);
 
     const footer = $('footer');
@@ -94,7 +95,8 @@
       else if (view.sort==='desc') show.sort((a,b)=> (b.due||'').localeCompare(a.due||''));
       else show.sort((a,b)=> a.order - b.order);
 
-      if (!show.length) { list.append($('li', { className:'task empty-message' }, ['Нет задач'])); return; }
+      if (!show.length) {
+        list.append($('li', { className:'task empty-message' }, ['Нет задач'])); return; }
 
 
       for (const t of show) {
@@ -107,7 +109,8 @@
         cb.addEventListener('change', ()=>{ t.done = cb.checked; save(tasks); render(); });
 
         const title = $('span', { className:'task-title', textContent: t.title, attrs:{ title:t.title } });
-        title.addEventListener('dblclick', ()=> startEdit(t, title));
+        title.addEventListener('dblclick', () => startEdit(t, title, date));
+
 
         const date = $('span', { className:'task-date', textContent: fmt(t.due) });
         const del  = $('button', { className:'btn-danger', textContent:'Удалить', on:{ click: ()=> {
@@ -118,7 +121,7 @@
 
         const handle = $('span', { className:'handle', textContent:'⋮⋮', attrs:{ title:'Перетащите' } });
 
-        // DnD
+        
         li.addEventListener('dragstart', (e)=> {
           e.dataTransfer.setData('id', t.id);
           setTimeout(()=> li.style.opacity='0.6', 0);
@@ -144,30 +147,47 @@
       }
     }
 
-    function startEdit(task, titleEl) {
-      const input = $('input', { attrs:{ type:'text', maxlength:'80' } });
-      input.value = task.title;
-      titleEl.replaceWith(input);
-      input.focus();
+     function startEdit(task, titleEl, dateEl) {
+      const titleInput = $('input', { attrs:{ type:'text', maxlength:'80', 'aria-label':'Новое название' } });
+      titleInput.value = task.title;
+
+  
+      const dateInput = $('input', { attrs:{ type:'date', 'aria-label':'Новая дата' } });
+      dateInput.value = task.due || '';
+
+      titleEl.replaceWith(titleInput);
+      if (dateEl) dateEl.replaceWith(dateInput);
+
+      titleInput.focus();
+      titleInput.select();
 
       function finish(apply) {
         if (apply) {
-          const v = input.value.trim();
-          if (v) task.title = v;
-          save(tasks);
+          const newTitle = (titleInput.value || '').trim();
+          const newDate  = (dateInput.value  || '').trim();
+          if (newTitle) {
+            task.title = newTitle;
+            task.due   = newDate;
+            save(tasks);
+          }
         }
         render();
       }
-      input.addEventListener('keydown', (e)=> {
-        if (e.key==='Enter') finish(true);
-        if (e.key==='Escape') finish(false);
-      });
-      input.addEventListener('blur', ()=> finish(true));
-    }
 
+      const onKey = (e) => {
+        if (e.key === 'Enter')  finish(true);
+        if (e.key === 'Escape') finish(false);
+      };
+      titleInput.addEventListener('keydown', onKey);
+      dateInput.addEventListener('keydown',  onKey);
+
+    }
     render();
   }
+
+
 
   if (document.readyState==='loading') document.addEventListener('DOMContentLoaded', build);
   else build();
 })();
+
