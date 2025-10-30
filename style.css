@@ -133,6 +133,20 @@ li.task.completed {
   pointer-events: none; 
 }
 
+ul.tasks:empty::before {
+  content: 'Нет задач';
+  display: block;
+  margin: 8px 0;
+  padding: 8px;
+  border: 1px dashed var(--border);
+  border-radius: 8px;
+  text-align: center;
+  color: var(--muted);
+  background: #fff;
+  opacity: 0.9;
+  font-style: italic;
+}
+
 
 .task-title {
   flex: 1;
